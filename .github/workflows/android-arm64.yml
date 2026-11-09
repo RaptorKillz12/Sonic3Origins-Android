@@ -1,0 +1,56 @@
+name: Android ARM64 APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out source and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK and CMake
+        run: |
+          sdkmanager "ndk;24.0.8215888" "cmake;3.22.1"
+
+      - name: Fetch Android native dependencies
+        run: |
+          mkdir -p dependencies/android
+          git clone --depth 1 https://github.com/xiph/ogg.git dependencies/android/libogg
+          git clone --depth 1 https://github.com/xiph/theora.git dependencies/android/libtheora
+
+      - name: Prepare RSDKv5 CMake source link
+        run: |
+          ln -s "$GITHUB_WORKSPACE" android/app/jni/RSDKv5
+          test -f RSDKv5/S3K.cpp
+          test -f platforms/Android.cmake
+          test -f dependencies/android/libogg/src/framing.c
+          test -f dependencies/android/libtheora/lib/decode.c
+
+      - name: Build ARM64 debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug -PABIFILTERS=arm64-v8a
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sonic3Origins-Android-arm64-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

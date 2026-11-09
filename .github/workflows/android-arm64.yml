@@ -33,8 +33,11 @@ jobs:
       - name: Fetch Android native dependencies
         run: |
           mkdir -p dependencies/android
-          git clone --depth 1 https://github.com/xiph/ogg.git dependencies/android/libogg
-          git clone --depth 1 https://github.com/xiph/theora.git dependencies/android/libtheora
+          git clone --depth 1 https://github.com/xiph/ogg.git /tmp/libogg-src
+          git clone --depth 1 https://github.com/xiph/theora.git /tmp/libtheora-src
+          mkdir -p dependencies/android/libogg dependencies/android/libtheora
+          cp -a /tmp/libogg-src/. dependencies/android/libogg/
+          cp -a /tmp/libtheora-src/. dependencies/android/libtheora/
 
       - name: Prepare RSDKv5 CMake source link
         run: |

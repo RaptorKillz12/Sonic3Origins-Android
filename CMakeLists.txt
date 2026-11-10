@@ -112,8 +112,6 @@ if(NOT PLATFORM)
     endif()
 endif()
 
-include(platforms/${PLATFORM}.cmake)
-
 if(ANDROID)
     # Origins signature scanning and executable patching target the Windows
     # desktop executable, not Android's native process.
@@ -124,6 +122,8 @@ if(ANDROID)
         RSDKv5/Symbols.cpp
     )
 endif()
+
+include(platforms/${PLATFORM}.cmake)
 
 set_target_properties(RetroEngine PROPERTIES OUTPUT_NAME ${RETRO_OUTPUT_NAME})
 

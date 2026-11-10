@@ -465,3 +465,15 @@ bool AndroidKeyUpCallback(GameActivity *activity, const GameActivityKeyEvent *ev
     }
     return false;
 }
+
+// Entry point required by Android's native_app_glue. GameActivity creates
+// the native app thread; the RSDK core runs on that thread and processes
+// lifecycle/window events through AndroidCommandCallback.
+extern "C" void android_main(android_app *state)
+{
+    app = state;
+    app->onAppCmd = AndroidCommandCallback;
+
+    const char *args[] = { "RSDK" };
+    RSDK_main(1, (char **)args, NULL);
+}

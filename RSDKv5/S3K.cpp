@@ -1,9 +1,10 @@
 #include "RSDK/Core/RetroEngine.hpp"
 #include "main.hpp"
 #include "S3K.hpp"
-#include "Helpers.h"
+#if RETRO_USE_MOD_LOADER
 #include "SigScan.h"
 #include "Symbols.h"
+#endif
 #include "S3KFunctions.hpp"
 
 #if RETRO_USE_MOD_LOADER
@@ -21,6 +22,9 @@ namespace RSDK
     SKU::AchievementID achievementIDs[0x40]{};
     int32 achievementIDCount = 0;
     bool *usePathTracer            = NULL;
+#if RETRO_PLATFORM == RETRO_ANDROID
+    static bool androidPathTracer = true;
+#endif
     bool usingLevelSelect          = false;
     bool32 isMirrorMode            = false;
     uint8 usedShields = 0;
@@ -38,14 +42,20 @@ namespace RSDK
 
     void OnEngineInit()
     {
+#if RETRO_USE_MOD_LOADER
         usePathTracer = (bool *)SigusePathTracer();
 
-        // Load data pack
+        // Load data pack from the Windows executable directory.
         char packPath[MAX_PATH];
         sprintf_s(packPath, "%s\\Update.rsdk", modPath);
         LoadDataPack(packPath, 0, false);
         sprintf_s(packPath, "%s\\Base.rsdk", modPath);
         LoadDataPack(packPath, 0, false);
+#else
+#if RETRO_PLATFORM == RETRO_ANDROID
+        usePathTracer = &androidPathTracer;
+#endif
+#endif
 
         RegisterLoopPoints();
         RegisterAchievements();
@@ -81,10 +91,11 @@ namespace RSDK
 
     void OnFrameInit()
     {
-        // Call Origins ProcessEngine for ML callbacks
-        ((void(__fastcall *)())((char *)SigProcessEngine_0A() - 0x0A))();
-        // Call Origins RunCore for ML callbacks
-        ((void(__fastcall *)())((char *)SigRunCore_0A() - 0x0A))();
+#if RETRO_USE_MOD_LOADER
+        // These signatures refer to the Windows Origins executable.
+        ((void(*)())((char *)SigProcessEngine_0A() - 0x0A))();
+        ((void(*)())((char *)SigRunCore_0A() - 0x0A))();
+#endif
 
         // Check for Plus DLC
         if (globalVars)

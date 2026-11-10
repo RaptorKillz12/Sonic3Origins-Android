@@ -10,7 +10,7 @@ int32 RSDK_main(int32 argc, char **argv, void *linkLogicPtr)
     if (linkLogicPtr)
         RSDK::linkGameLogic = (RSDK::LogicLinkHandle)linkLogicPtr;
     else
-        RSDK::linkGameLogic = RSDK::LinkGameLogic;
+        RSDK::linkGameLogic = (RSDK::LogicLinkHandle)RSDK::LinkGameLogic;
 
     RSDK::InitCoreAPI();
     int32 exitCode = RSDK::RunRetroEngine(argc, argv);

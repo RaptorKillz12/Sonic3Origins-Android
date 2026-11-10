@@ -1,6 +1,7 @@
 #include <RSDK/Core/RetroEngine.hpp>
 #include <main.hpp>
 #include <pthread.h>
+#include <android/log.h>
 
 bool32 launched = false;
 pthread_t mainthread;
@@ -38,6 +39,21 @@ struct JNISetup *GetJNISetup()
     if (!_jni_setup.thiz) {
         _jni_setup.thiz  = app->activity->javaGameActivity;
         _jni_setup.clazz = _jni_setup.env->GetObjectClass(_jni_setup.thiz);
+
+        // Resolve the Java bridge methods before the engine attempts file I/O.
+        // A null method ID passed to CallIntMethod/CallVoidMethod crashes ART.
+        getFD       = _jni_setup.env->GetMethodID(_jni_setup.clazz, "getFD", "([BB)I");
+        writeLog    = _jni_setup.env->GetMethodID(_jni_setup.clazz, "writeLog", "([BI)V");
+        showLoading = _jni_setup.env->GetMethodID(_jni_setup.clazz, "showLoadingIcon", "()V");
+        hideLoading = _jni_setup.env->GetMethodID(_jni_setup.clazz, "hideLoadingIcon", "()V");
+        setLoading  = _jni_setup.env->GetMethodID(_jni_setup.clazz, "setLoadingIcon", "([B)V");
+        setPixSize  = _jni_setup.env->GetMethodID(_jni_setup.clazz, "setPixSize", "(II)V");
+
+        if (_jni_setup.env->ExceptionCheck()) {
+            _jni_setup.env->ExceptionDescribe();
+            _jni_setup.env->ExceptionClear();
+            __android_log_print(ANDROID_LOG_ERROR, "RSDKv5", "Failed to resolve Java bridge methods");
+        }
     }
     return &_jni_setup;
 }
@@ -473,6 +489,9 @@ extern "C" void android_main(android_app *state)
 {
     app = state;
     app->onAppCmd = AndroidCommandCallback;
+
+    // Initialize the Java bridge on the Android app thread before RSDK starts.
+    GetJNISetup();
 
     const char *args[] = { "RSDK" };
     RSDK_main(1, (char **)args, NULL);

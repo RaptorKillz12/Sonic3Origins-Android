@@ -50,18 +50,45 @@ public class Launcher extends AppCompatActivity {
         folderLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        basePath = result.getData().getData();
+                    if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null
+                            || result.getData().getData() == null) {
+                        Log.w("RSDKv5-J", "Folder selection was cancelled.");
+                        return;
                     }
+
+                    Intent data = result.getData();
+                    basePath = data.getData();
+
                     try {
-                        Log.i("hi", String.format("%d", getContentResolver().openInputStream(
-                                DocumentFile.fromTreeUri(this, basePath).findFile("Settings.ini").getUri()).read()));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
+                        int grantedFlags = data.getFlags()
+                                & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        getContentResolver().takePersistableUriPermission(basePath, grantedFlags);
+
+                        DocumentFile selectedFolder = DocumentFile.fromTreeUri(this, basePath);
+                        if (selectedFolder == null || !selectedFolder.exists() || !selectedFolder.isDirectory()) {
+                            basePath = null;
+                            new AlertDialog.Builder(this)
+                                    .setTitle("Invalid folder")
+                                    .setMessage("Android could not open the selected folder. Please select it again.")
+                                    .setPositiveButton("OK", (dialog, which) -> folderPicker())
+                                    .setCancelable(false)
+                                    .show();
+                            return;
+                        }
+
+                        refreshStore();
+                        startGame(true);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e("RSDKv5-J", "Could not access selected folder.", e);
+                        basePath = null;
+                        new AlertDialog.Builder(this)
+                                .setTitle("Folder access failed")
+                                .setMessage("The selected folder could not be accessed. Please select the game data folder again.")
+                                .setPositiveButton("OK", (dialog, which) -> folderPicker())
+                                .setCancelable(false)
+                                .show();
                     }
-                    startGame(true);
                 });
 
         gameLauncher = registerForActivityResult(

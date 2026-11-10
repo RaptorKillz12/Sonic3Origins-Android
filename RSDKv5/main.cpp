@@ -3,6 +3,14 @@
 
 #if RETRO_PLATFORM == RETRO_ANDROID
 
+// Android does not use the desktop mod-loader path redirection.
+// An empty output tells Reader.cpp to use the original game-data path.
+void GetRedirectedPath(const char *path, char *out)
+{
+    (void)path;
+    out[0] = '\\0';
+}
+
 // Native Android entry point. Android's GameActivity owns the EGL surface
 // and lifecycle; the RSDK core is started directly without Windows DLL hooks.
 int32 RSDK_main(int32 argc, char **argv, void *linkLogicPtr)

@@ -202,6 +202,16 @@ enum GameRegions {
 // ============================
 #define RETRO_USERCORE_ID (0b00010001) // This is modified to allow multiple user cores
 
+// Android builds use the built-in dummy user core; Steam/EOS SDKs are desktop-only.
+#if RETRO_PLATFORM == RETRO_ANDROID
+#undef RETRO_USERCORE_ID
+#define RETRO_USERCORE_ID (0)
+#endif
+
+#ifndef MAX_PATH
+#define MAX_PATH (260)
+#endif
+
 #define RETRO_USERCORE_DUMMY (!(RETRO_USERCORE_ID & 0x80)) // bit 7 disables the dummy core stuff if you ever need that for some odd reason
 #define RETRO_USERCORE_STEAM (RETRO_USERCORE_ID & 0b00000001)
 #define RETRO_USERCORE_PS4   (RETRO_USERCORE_ID & 0b00000010)

@@ -114,6 +114,17 @@ endif()
 
 include(platforms/${PLATFORM}.cmake)
 
+if(ANDROID)
+    # Origins signature scanning and executable patching target the Windows
+    # desktop executable, not Android's native process.
+    set(RETRO_MOD_LOADER OFF CACHE BOOL "Disable desktop mod loader on Android" FORCE)
+    list(REMOVE_ITEM RETRO_FILES
+        RSDKv5/Patches.cpp
+        RSDKv5/SigScan.cpp
+        RSDKv5/Symbols.cpp
+    )
+endif()
+
 set_target_properties(RetroEngine PROPERTIES OUTPUT_NAME ${RETRO_OUTPUT_NAME})
 
 if(COMPILE_OGG)
